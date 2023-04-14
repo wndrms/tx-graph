@@ -2,20 +2,11 @@ import { useEffect, useState } from "react";
 import Graph from "./Graph";
 import driver from './neo4j'
 import Driver from "neo4j-driver/types/driver";
+import { Node, Link } from "./interfaces";
 
 interface GraphData {
   nodes: Node[],
   links: Link[]
-}
-interface Node {
-  name: string,
-  layer: number,
-  y: number,
-}
-
-interface Link {
-  source: string,
-  target: string,
 }
 
 function App() {
@@ -33,8 +24,8 @@ function App() {
 
       async function findNodes(driver: Driver, target: string) {
         const session = driver.session({ database: 'neo4j' });
-        var nodes: { name: string; layer: number, y: number}[] = [{name: target, layer: 0, y: 0}]
-        var links: { source: string; target: string; }[] = []
+        var nodes: Node[] = [{name: target, layer: 0}]
+        var links: Link[] = []
         try {
           const readQuery = 'MATCH (a:Wallet)-[t:TX]->(b:Wallet) WHERE a.hacker=$name OR b.hacker=$name RETURN a, t, b';
           const readResult = await session.executeRead(tx =>
@@ -43,11 +34,16 @@ function App() {
           
           readResult.records.forEach(record => {
             if (nodes.find((node) => node.name === record.get('a').properties.addr) === undefined)
-              nodes.push({ name: record.get('a').properties.addr, layer: 99, y: 0 })
+              nodes.push({ name: record.get('a').properties.addr, type: record.get('a').properties.type, layer: 99 })
             if (nodes.find((node) => node.name === record.get('b').properties.addr) === undefined)
-              nodes.push({ name: record.get('b').properties.addr, layer: 99, y: 0 })
-            if (links.find((link) => link.source === record.get('a').properties.addr && link.target === record.get('b').properties.addr) === undefined)
-              links.push({ source: record.get('a').properties.addr, target: record.get('b').properties.addr })
+              nodes.push({ name: record.get('b').properties.addr, type: record.get('b').properties.type, layer: 99 })
+            const link = links.find((link) => link.source === record.get('a').properties.addr && link.target === record.get('b').properties.addr) 
+            if ( link === undefined ){
+              links.push({ source: record.get('a').properties.addr, target: record.get('b').properties.addr, value: record.get('t').properties.value})
+            } else {
+              link.value += record.get('t').value
+            }
+              
             //console.log(record);
           });
         } catch (error) {

@@ -5,10 +5,10 @@ import {
   TitleComponent,
   TooltipComponent,
   LegendComponent,
-  GridComponent,
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import { EChartsOption } from 'echarts';
+import { Link, Node } from "./interfaces";
 
 // Register necessary components
 echarts.use([
@@ -17,54 +17,41 @@ echarts.use([
   TooltipComponent,
   LegendComponent,
   CanvasRenderer,
-  GridComponent,
 ]);
 
 interface GraphProps {
   data: {
-    nodes: Array<{ name: string; layer: number }>;
-    links: Array<{ source: string; target: string }>;
+    nodes: Node[];
+    links: Link[];
   };
-}
-interface Node {
-  name: string,
-  layer: number,
-  x: number,
-  y: number,
-  itemStyle: any,
-}
-
-interface Link {
-  source: string,
-  target: string,
 }
 
 const Graph: React.FC<GraphProps> = ({ data }) => {
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    function customLayout(nodes: any[]) {
-      const layerGroups = new Map();
-      nodes.forEach(node => {
-        const layer = node.layer;
-        if (!layerGroups.has(layer)) {
-          layerGroups.set(layer, []);
+    const layerGroups = new Map();
+    data.nodes.forEach(node => {
+      const layer = node.layer;
+      if (!layerGroups.has(layer)) {
+        layerGroups.set(layer, []);
+      }
+      layerGroups.get(layer).push(node);
+    });
+    layerGroups.forEach((nodes, layer) => {
+      const totlaNodes = nodes.length;
+      const nodeRadius = 50;
+      const centerX = (totlaNodes - 1) * nodeRadius;
+      nodes.forEach((node: Node, index: number) => {
+        if(layer === 99) {
+          node.x = 0;
+          node.y = 0;
+        } else {
+          node.y = centerX - index * 2 * nodeRadius;
+          node.x = layer * 200;
         }
-        layerGroups.get(layer).push(node);
       });
-      layerGroups.forEach((nodes, layer) => {
-        const totlaNodes = nodes.length;
-        const nodeRadius = 50;
-        const centerX = (totlaNodes - 1) * nodeRadius;
-        nodes.forEach((node: Node, index: number) => {
-          node.x = centerX - index * 2 * nodeRadius;
-          node.y = layer * 200;
-          node.itemStyle = {
-            colorBy: layer,
-          };
-        });
-      });
-    }
+    });
     if (chartRef.current) {
       const chart = echarts.init(chartRef.current);
       const options: EChartsOption = {
@@ -95,6 +82,11 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
             links: data.links,
             edgeSymbol: ['circle', 'arrow'],
             edgeSymbolSize: [2, 5],
+            edgeLabel: {
+              show: true,
+              position: 'insideMiddle',
+              formatter: '{@value}',
+            },
           },
         ],
       };
