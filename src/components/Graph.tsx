@@ -30,6 +30,7 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
   const chartRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
+    
     const layerGroups = new Map();
     data.nodes.forEach(node => {
       const layer = node.layer;
