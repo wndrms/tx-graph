@@ -1,9 +1,10 @@
 export interface Node {
     name: string,
     type?: string,
-    layer: number,
+    layer?: number,
     x?: number,
     y?: number,
+    zlevel?: number,
 }
   
 export interface Link {

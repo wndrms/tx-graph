@@ -9,6 +9,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers';
 import { EChartsOption } from 'echarts';
 import { Link, Node } from "./interfaces";
+import { TplFormatterParam } from 'echarts/types/src/util/format';
 
 // Register necessary components
 echarts.use([
@@ -44,12 +45,13 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
       const nodeRadius = 50;
       const centerX = (totlaNodes - 1) * nodeRadius;
       nodes.forEach((node: Node, index: number) => {
+        node.zlevel = 10;
         if(layer === 99) {
           node.x = 0;
           node.y = 0;
         } else {
           node.y = centerX - index * 2 * nodeRadius;
-          node.x = layer * 200;
+          node.x = layer * 2000;
         }
       });
     });
@@ -60,7 +62,10 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
           text: 'Money Laundering',
         },
         tooltip: {
-          trigger: 'item',
+          triggerOn: 'none',
+          formatter: function (params:TplFormatterParam) {
+            return `Node: ${params.name}`
+          }
         },
         legend: {
           show: true,
@@ -73,7 +78,7 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
               layoutAnimation: false,
               edgeLength: 120,
             },
-            symbolSize: 10,
+            symbolSize: 20,
             roam: true,
             label: {
               show: false,
@@ -92,6 +97,15 @@ const Graph: React.FC<GraphProps> = ({ data }) => {
         ],
       };
       chart.setOption(options);
+      chart.on('click', (params) => {
+        if (params.componentType === 'series') {
+          if (params.dataType === 'node') {
+            const nodeIndex:number = params.dataIndex;
+            console.log(data.nodes[nodeIndex])
+          }
+          
+        }
+      });
     }
   }, [data]);
 
